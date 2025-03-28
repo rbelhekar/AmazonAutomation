@@ -51,11 +51,27 @@ with (open(file_name, mode="w", newline="", encoding="utf-8") as file):
     writer.writerow(csv_headers)
     while True:
 
+        # Scroll to the bottom until no new products load to counter lazy loading
+        previous_height = driver.execute_script("return document.body.scrollHeight")
+        while True:
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(2)  # Let the content load
+
+            new_height = driver.execute_script("return document.body.scrollHeight")
+
+            # Break if no new content is loaded
+            if new_height == previous_height:
+                break
+            previous_height = new_height
+
+        # Make a list of all products present on the page
         listed_products = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR,"a.a-link-normal>h2.a-size-medium.a-spacing-none.a-color-base.a-text-normal")))
+
+        # Loop over each product
         for idx,product in enumerate(listed_products):
-            # ✅ Scroll into view to force lazy loading
-            #driver.execute_script("arguments[0].scrollIntoView(true);", product)
-            #time.sleep(0.5)  # Small pause to let content load
+            # Scroll into view to force lazy loading
+            driver.execute_script("arguments[0].scrollIntoView(true);", product)
+            time.sleep(0.1)  # Small pause to let content load
             # Product name
             product_name = product.text.strip()
 
